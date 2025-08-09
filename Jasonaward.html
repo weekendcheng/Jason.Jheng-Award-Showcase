@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>得獎紀錄｜Portfolio of Awards</title>
+  <meta name="description" content="個人得獎紀錄彙整與展示" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&display=swap" rel="stylesheet">
+  <!-- Tailwind CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Inter', 'ui-sans-serif', 'system-ui'] },
+          colors: {
+            brand: {
+              50: '#eef7ff', 100: '#d9edff', 200: '#bce0ff', 300: '#8ccaff',
+              400: '#57adff', 500: '#2b90ff', 600: '#1675e6', 700: '#115bb4',
+              800: '#0f498c', 900: '#103c6f'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    html { scroll-behavior: smooth; }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800">
+  <!-- NAV -->
+  <header class="sticky top-0 z-50 backdrop-blur supports-[backdrop-filter]:bg-white/70 bg-white/90 border-b border-slate-200">
+    <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-xl bg-brand-600 text-white grid place-items-center font-bold">🏆</div>
+        <div class="font-extrabold tracking-tight text-slate-900">得獎紀錄</div>
+      </div>
+      <nav class="hidden md:flex items-center gap-6 text-sm">
+        <a href="#stats" class="hover:text-brand-700">概覽</a>
+        <a href="#list" class="hover:text-brand-700">清單</a>
+        <a href="#timeline" class="hover:text-brand-700">時間軸</a>
+        <a href="#gallery" class="hover:text-brand-700">相簿</a>
+        <a href="#about" class="hover:text-brand-700">關於</a>
+      </nav>
+      <button id="exportCsvBtn" class="inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium bg-slate-900 text-white hover:bg-slate-800 active:scale-[.99]">匯出 CSV</button>
+    </div>
+  </header>
+
+  <!-- HERO -->
+  <section class="bg-gradient-to-b from-brand-50 to-transparent border-b border-slate-200">
+    <div class="max-w-6xl mx-auto px-4 py-12 grid md:grid-cols-[auto,1fr] gap-8">
+      <img id="profilePhoto" src="https://i.ibb.co/hRNxq2HD/375456.jpg" alt="profile" class="w-28 h-28 rounded-2xl object-cover ring-4 ring-white shadow"/>
+      <div>
+        <h1 class="text-2xl md:text-4xl font-black tracking-tight text-slate-900">{NAME} 的得獎紀錄</h1>
+        <p class="mt-3 text-slate-600 max-w-2xl">在這裡整理所有比賽與檢定的成就。支援關鍵字搜尋、年度/類別篩選、CSV 匯出與相片展示。將下方 <code>awardsData</code> 直接編輯即可上線。</p>
+        <div class="mt-4 flex flex-wrap items-center gap-3 text-sm text-slate-600">
+          <span class="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-white border border-slate-200">📍 Taiwan</span>
+          <span class="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-white border border-slate-200">🎓 Student Portfolio</span>
+          <span class="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-white border border-slate-200">🔒 無需後端</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CONTROLS + STATS -->
+  <section id="stats" class="max-w-6xl mx-auto px-4 py-8">
+    <div class="grid md:grid-cols-4 gap-4">
+      <div class="rounded-2xl bg-white border border-slate-200 p-4">
+        <div class="text-slate-500 text-sm">總得獎數</div>
+        <div id="statTotal" class="text-3xl font-black mt-1">0</div>
+      </div>
+      <div class="rounded-2xl bg-white border border-slate-200 p-4">
+        <div class="text-slate-500 text-sm">金 / 銀 / 銅</div>
+        <div id="statMedals" class="text-3xl font-black mt-1">-</div>
+      </div>
+      <div class="rounded-2xl bg-white border border-slate-200 p-4">
+        <div class="text-slate-500 text-sm">涵蓋年份</div>
+        <div id="statYears" class="text-3xl font-black mt-1">-</div>
+      </div>
+      <div class="rounded-2xl bg-white border border-slate-200 p-4">
+        <div class="text-slate-500 text-sm">類別數</div>
+        <div id="statCategories" class="text-3xl font-black mt-1">-</div>
+      </div>
+    </div>
+
+    <div class="mt-6 rounded-2xl bg-white border border-slate-200 p-4">
+      <div class="grid md:grid-cols-[1fr,180px,180px] gap-3">
+        <input id="searchInput" placeholder="搜尋關鍵字（例如：英語、縣賽、科展）" class="w-full rounded-xl border border-slate-300 px-3 py-2.5 outline-none focus:ring-4 focus:ring-brand-200" />
+        <select id="yearFilter" class="rounded-xl border border-slate-300 px-3 py-2.5 outline-none focus:ring-4 focus:ring-brand-200">
+          <option value="">全部年份</option>
+        </select>
+        <select id="categoryFilter" class="rounded-xl border border-slate-300 px-3 py-2.5 outline-none focus:ring-4 focus:ring-brand-200">
+          <option value="">全部類別</option>
+        </select>
+      </div>
+    </div>
+  </section>
+
+  <!-- LIST -->
+  <section id="list" class="max-w-6xl mx-auto px-4 py-4">
+    <div id="cards" class="grid md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+    <div id="emptyState" class="hidden rounded-2xl bg-white border border-dashed border-slate-300 p-8 text-center text-slate-500">沒有符合條件的項目。</div>
+  </section>
+
+  <!-- TIMELINE -->
+  <section id="timeline" class="max-w-6xl mx-auto px-4 py-10">
+    <h2 class="text-xl font-extrabold tracking-tight mb-4">時間軸</h2>
+    <ol id="timelineList" class="relative border-s border-slate-200 pl-6"></ol>
+  </section>
+
+  <!-- GALLERY -->
+  <section id="gallery" class="max-w-6xl mx-auto px-4 py-10">
+    <h2 class="text-xl font-extrabold tracking-tight mb-4">相簿</h2>
+    <div id="galleryGrid" class="grid grid-cols-2 md:grid-cols-4 gap-3"></div>
+  </section>
+
+  <!-- ABOUT -->
+  <section id="about" class="max-w-6xl mx-auto px-4 py-12">
+    <div class="rounded-2xl bg-white border border-slate-200 p-6">
+      <h3 class="text-lg font-bold">如何維護這個網站？</h3>
+      <ol class="list-decimal pl-6 mt-3 space-y-2 text-slate-700">
+        <li>把這個 <code>index.html</code> 檔上傳到任一靜態空間（GitHub Pages、Netlify、Cloudflare Pages、或學校/公司的靜態主機）。</li>
+        <li>在下方 <code>awardsData</code> 陣列中，照著範例新增或修改得獎項目即可。</li>
+        <li>圖片/證書建議放到雲端（Google Drive 設公開連結、或 Imgur/Cloudinary），把 URL 填到 <code>photo</code> / <code>certificate</code> 欄位。</li>
+      </ol>
+      <p class="mt-3 text-sm text-slate-500">進階：若想用 Google 試算表維護，我可以把此頁改成讀取線上 CSV/JSON。</p>
+    </div>
+    <footer class="mt-8 text-center text-xs text-slate-500">© <span id="yearNow"></span> {NAME}. All rights reserved.</footer>
+  </section>
+
+  <!-- DATA + SCRIPT -->
+  <script>
+    // 1) 編輯這段資料即可（可加可刪）。date 用 YYYY-MM-DD 便於排序。
+    const awardsData = [
+      {
+        title: '全國英語朗讀比賽',
+        event: '第15屆全國中小學英語比賽',
+        level: '全國賽', // 校內/縣市/全國/國際
+        rank: '金牌', // 金/銀/銅/優勝/第一名...
+        category: '語文',
+        org: '教育部',
+        date: '2024-12-10',
+        location: '台北',
+        description: '以自選文章朗讀，發音與情緒表達獲得評審一致好評。',
+        certificate: '',
+        photo: 'https://images.unsplash.com/photo-1508171444681-032a1e8e1f2a?q=80&w=1200&auto=format&fit=crop'
+      },
+      {
+        title: '科學展覽競賽 優等',
+        event: '第23屆校園科展',
+        level: '校內',
+        rank: '優等',
+        category: '科學',
+        org: '自然科學社',
+        date: '2025-03-22',
+        location: '新竹',
+        description: '自製滅火器實驗設計，展示化學反應與安全性。',
+        certificate: '',
+        photo: 'https://images.unsplash.com/photo-1632633175699-bdb0772f0630?q=80&w=1200&auto=format&fit=crop'
+      },
+      {
+        title: '數學競賽 亞軍',
+        event: 'IMC 區域選拔賽',
+        level: '縣市',
+        rank: '第二名',
+        category: '數學',
+        org: '數學學會',
+        date: '2023-11-05',
+        location: '台中',
+        description: '組合數學與幾何綜合題表現穩定。',
+        certificate: '',
+        photo: 'https://images.unsplash.com/photo-1516375199440-4833ff9b99df?q=80&w=1200&auto=format&fit=crop'
+      },
+      {
+        title: '程式設計挑戰賽 優勝',
+        event: 'Scratch x Python 校園盃',
+        level: '校內',
+        rank: '優勝',
+        category: '資訊',
+        org: '資訊研究社',
+        date: '2025-05-18',
+        location: '台北',
+        description: '以 Python 實作資料視覺化小專題。',
+        certificate: '',
+        photo: 'https://images.unsplash.com/photo-1515879218367-8466d910aaa4?q=80&w=1200&auto=format&fit=crop'
+      }
+    ];
+
+    // 2) 站點設定：
+    const siteConfig = {
+      name: '鄭程丰Jason.Jheng', // ← 這裡改成小朋友名字
+      profilePhoto: document.getElementById('profilePhoto').src
+    };
+
+    // 工具函式
+    const $ = (sel) => document.querySelector(sel);
+    const $$ = (sel) => Array.from(document.querySelectorAll(sel));
+    const fmt = (d) => new Date(d).toLocaleDateString('zh-TW', { year: 'numeric', month: '2-digit', day: '2-digit'});
+
+    // 初始化標題/年份
+    document.title = `${siteConfig.name || '{NAME}'} 的得獎紀錄`;
+    document.querySelectorAll('h1').forEach(h => h.innerHTML = document.title);
+    $('#yearNow').textContent = new Date().getFullYear();
+
+    const yearFilter = $('#yearFilter');
+    const categoryFilter = $('#categoryFilter');
+    const searchInput = $('#searchInput');
+
+    function refreshFilters() {
+      const years = [...new Set(awardsData.map(a => new Date(a.date).getFullYear()))].sort((a,b)=>b-a);
+      years.forEach(y => {
+        const opt = document.createElement('option');
+        opt.value = String(y);
+        opt.textContent = `${y} 年`;
+        yearFilter.appendChild(opt);
+      });
+      const cats = [...new Set(awardsData.map(a => a.category))].sort();
+      cats.forEach(c => {
+        const opt = document.createElement('option');
+        opt.value = c;
+        opt.textContent = c;
+        categoryFilter.appendChild(opt);
+      });
+    }
+
+    function computeStats(list) {
+      const total = list.length;
+      const medalMap = { '金': 0, '銀': 0, '銅': 0 };
+      list.forEach(a => {
+        if (a.rank.includes('金')) medalMap['金']++;
+        else if (a.rank.includes('銀')) medalMap['銀']++;
+        else if (a.rank.includes('銅')) medalMap['銅']++;
+      });
+      const years = [...new Set(list.map(a => new Date(a.date).getFullYear()))];
+      const cats = [...new Set(list.map(a => a.category))];
+      $('#statTotal').textContent = total;
+      $('#statMedals').textContent = `${medalMap['金']} / ${medalMap['銀']} / ${medalMap['銅']}`;
+      $('#statYears').textContent = years.length ? `${Math.min(...years)}–${Math.max(...years)}` : '-';
+      $('#statCategories').textContent = cats.length;
+    }
+
+    function renderCards(list) {
+      const container = $('#cards');
+      const empty = $('#emptyState');
+      container.innerHTML = '';
+      if (list.length === 0) { empty.classList.remove('hidden'); return; }
+      empty.classList.add('hidden');
+      list.forEach(a => {
+        const card = document.createElement('article');
+        card.className = 'rounded-2xl bg-white border border-slate-200 overflow-hidden hover:shadow-md transition-shadow';
+        card.innerHTML = `
+          <img src="${a.photo || 'https://picsum.photos/800/450'}" alt="${a.title}" class="w-full h-40 object-cover"/>
+          <div class="p-4">
+            <div class="flex items-center justify-between gap-3">
+              <h3 class="font-bold text-slate-900">${a.title}</h3>
+              <span class="text-xs px-2 py-1 rounded-full bg-brand-100 text-brand-800 border border-brand-200">${a.level}</span>
+            </div>
+            <div class="mt-1 text-sm text-slate-600">${a.event}</div>
+            <div class="mt-2 flex flex-wrap items-center gap-2 text-xs text-slate-600">
+              <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-slate-100">🏅 ${a.rank}</span>
+              <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-slate-100">📚 ${a.category}</span>
+              <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-slate-100">📍 ${a.location || '-'}</span>
+              <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-slate-100">🗓️ ${fmt(a.date)}</span>
+            </div>
+            <p class="mt-3 text-sm text-slate-700">${a.description || ''}</p>
+            <div class="mt-3 flex items-center gap-3">
+              ${a.certificate ? `<a href="${a.certificate}" target="_blank" class="text-sm font-medium text-brand-700 hover:underline">查看證書 →</a>` : ''}
+            </div>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    function renderTimeline(list) {
+      const tl = $('#timelineList');
+      tl.innerHTML = '';
+      list.slice().sort((a,b)=> new Date(b.date)-new Date(a.date)).forEach(a => {
+        const li = document.createElement('li');
+        li.className = 'mb-6';
+        li.innerHTML = `
+          <div class="absolute -left-1.5 mt-1 w-3 h-3 rounded-full bg-brand-500"></div>
+          <time class="text-xs text-slate-500">${fmt(a.date)}</time>
+          <div class="mt-1 font-semibold">${a.title} · <span class="text-slate-600 font-normal">${a.event}</span></div>
+          <div class="text-sm text-slate-600">${a.level}｜${a.rank}｜${a.category}｜${a.location || ''}</div>
+        `;
+        tl.appendChild(li);
+      });
+    }
+
+    function renderGallery(list) {
+      const grid = $('#galleryGrid');
+      grid.innerHTML = '';
+      list.filter(a => a.photo).forEach(a => {
+        const fig = document.createElement('figure');
+        fig.className = 'overflow-hidden rounded-xl border border-slate-200 bg-white';
+        fig.innerHTML = `
+          <img src="${a.photo}" alt="${a.title}" class="w-full h-40 object-cover hover:scale-105 transition-transform"/>
+          <figcaption class="p-2 text-xs text-slate-600">${a.title}（${a.rank}）</figcaption>
+        `;
+        grid.appendChild(fig);
+      });
+    }
+
+    function applyFilters() {
+      const kw = searchInput.value.trim();
+      const y = yearFilter.value;
+      const c = categoryFilter.value;
+      let list = awardsData.slice();
+      if (kw) {
+        const k = kw.toLowerCase();
+        list = list.filter(a => JSON.stringify(a).toLowerCase().includes(k));
+      }
+      if (y) list = list.filter(a => String(new Date(a.date).getFullYear()) === y);
+      if (c) list = list.filter(a => a.category === c);
+      // 由新到舊
+      list.sort((a,b)=> new Date(b.date) - new Date(a.date));
+      computeStats(list);
+      renderCards(list);
+      renderTimeline(list);
+      renderGallery(list);
+    }
+
+    function exportCSV() {
+      const headers = ['title','event','level','rank','category','org','date','location','description','certificate','photo'];
+      const rows = awardsData.map(a => headers.map(h => (a[h] ?? '').toString().replaceAll('"', '""')));
+      const csv = [headers.join(','), ...rows.map(r => '"' + r.join('","') + '"')].join('\n');
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = 'awards.csv'; a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    // 綁定事件
+    [searchInput, yearFilter, categoryFilter].forEach(el => el.addEventListener('input', applyFilters));
+    document.getElementById('exportCsvBtn').addEventListener('click', exportCSV);
+
+    // 啟動
+    refreshFilters();
+    applyFilters();
+  </script>
+</body>
+</html>
